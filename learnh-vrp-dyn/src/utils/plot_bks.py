@@ -1,4 +1,4 @@
-"""Comparación dinámica frente a la BKS: coste real de estático, v1 y v2 contra el coste real de las rutas de la BKS.
+"""Comparación dinámica frente a la BKS: coste real del estático y de nuestra learnheuristic contra el de las rutas de la BKS.
 
 Las rutas de la BKS (data/*.sol) pasan por la misma caja negra que nuestras
 soluciones, cada una en su sentido más barato. Así todo se mide con la misma
@@ -14,7 +14,7 @@ import numpy as np
 from matplotlib.figure import Figure
 
 from ..dynamic.black_box import BlackBox
-from ..dynamic.d_br_cws_v2 import get_edge
+from ..dynamic.d_br_cws import get_edge
 from ..vrp_objects import Route, create_nodes_and_edges
 from .cvrplib import read_bks, read_instance
 
@@ -38,7 +38,7 @@ def bks_real_cost(name: str) -> float:
     return total
 
 
-SERIES = {"Estático (SRC)": "src", "D-BR-CWS v1 (DRC)": "drc", "D-BR-CWS v2 (DRC v2)": "drc_v2"}
+SERIES = {"Estático (SRC)": "src", "D-BR-CWS (DRC)": "drc"}
 
 
 def bks_gaps() -> tuple[list[str], np.ndarray, dict[str, np.ndarray], dict[str, np.ndarray]]:
@@ -54,18 +54,18 @@ def bks_gaps() -> tuple[list[str], np.ndarray, dict[str, np.ndarray], dict[str, 
 if __name__ == "__main__":
     names, bks, costs, gaps = bks_gaps()
     f = lambda v: f"{v:.2f}".replace(".", ",")  # noqa: E731
-    print("| Instancia | BKS (coste real) | SRC | DRC v1 | DRC v2 | gap SRC (%) | gap DRC v1 (%) | gap DRC v2 (%) |")
-    print("|---|---:|---:|---:|---:|---:|---:|---:|")
+    print("| Instancia | BKS (coste real) | SRC | DRC | gap SRC (%) | gap DRC (%) |")
+    print("|---|---:|---:|---:|---:|---:|")
     for k, name in enumerate(names):
         print(f"| {name} | {f(bks[k])} | " + " | ".join(f(costs[c][k]) for c in costs) + " | " + " | ".join(f(gaps[c][k]) for c in gaps) + " |")
-    print("| **Media** | | | | | " + " | ".join(f"**{f(g.mean())}**" for g in gaps.values()) + " |")
+    print("| **Media** | | | | " + " | ".join(f"**{f(g.mean())}**" for g in gaps.values()) + " |")
 
     fig = Figure(figsize=(16, 6))
     ax = fig.subplots()
     x = np.arange(len(names))
-    width = 0.27
+    width = 0.4
     for k, (label, column) in enumerate(SERIES.items()):
-        ax.bar(x + (k - 1) * width, gaps[column], width, label=f"{label} · media {gaps[column].mean():.2f} %")
+        ax.bar(x + (k - 0.5) * width, gaps[column], width, label=f"{label} · media {gaps[column].mean():.2f} %")
     ax.axhline(0, color="black", lw=0.8)
     ax.set_xticks(x, names, rotation=60, ha="right", fontsize=8)
     ax.set_ylabel("gap frente al coste real de la BKS (%)")

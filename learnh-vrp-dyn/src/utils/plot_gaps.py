@@ -1,7 +1,7 @@
-"""Gap SRC frente a DRC por instancia: paper (tabla 1), nuestro v1 y nuestro v2.
+"""Gap SRC frente a DRC por instancia: paper (tabla 1) y nuestra learnheuristic.
 
 Como en la tabla 1 del paper: gap = (SRC − DRC) / DRC · 100 por instancia, y la
-media es la media de esos gaps. En v2 el DRC es el de D-BR-CWS v2.
+media es la media de esos gaps.
 
     python -m src.utils.plot_gaps   # → figures/plots/src_gap.png y tabla Markdown por pantalla
 """
@@ -21,26 +21,23 @@ PAPER = [0.98, 15.63, 10.54, 9.12, 15.33, 15.90, 16.43, 16.78, 16.09, 12.15, 10.
 rows = list(csv.DictReader(open(ROOT / "results" / "learnheuristic.csv")))
 names = [r["instance"] for r in rows]
 src = np.array([float(r["src"]) for r in rows])
-series = {
-    "Paper (SRC vs DRC)": np.array(PAPER),
-    "Nuestro v1 (SRC vs DRC v1)": 100 * (src - (drc := np.array([float(r["drc"]) for r in rows]))) / drc,
-    "Nuestro v2 (SRC vs DRC v2)": 100 * (src - (drc_v2 := np.array([float(r["drc_v2"]) for r in rows]))) / drc_v2,
-}
+drc = np.array([float(r["drc"]) for r in rows])
+series = {"Paper (SRC vs DRC)": np.array(PAPER), "Nuestro (SRC vs DRC)": 100 * (src - drc) / drc}
 assert len(PAPER) == len(names)
 
 f = lambda v: f"{v:.2f}".replace(".", ",")  # noqa: E731
-print("| Instancia | SRC | DRC v1 | DRC v2 | Paper (%) | SRC vs DRC v1 (%) | SRC vs DRC v2 (%) |")
-print("|---|---:|---:|---:|---:|---:|---:|")
+print("| Instancia | SRC | DRC | Paper (%) | Nuestro (%) |")
+print("|---|---:|---:|---:|---:|")
 for k, name in enumerate(names):
-    print(f"| {name} | {f(src[k])} | {f(drc[k])} | {f(drc_v2[k])} | " + " | ".join(f(g[k]) for g in series.values()) + " |")
-print("| **Media** | | | | " + " | ".join(f"**{f(g.mean())}**" for g in series.values()) + " |")
+    print(f"| {name} | {f(src[k])} | {f(drc[k])} | " + " | ".join(f(g[k]) for g in series.values()) + " |")
+print("| **Media** | | | " + " | ".join(f"**{f(g.mean())}**" for g in series.values()) + " |")
 
 fig = Figure(figsize=(16, 6))
 ax = fig.subplots()
 x = np.arange(len(names))
-width = 0.27
+width = 0.4
 for k, (label, g) in enumerate(series.items()):
-    ax.bar(x + (k - 1) * width, g, width, color=("#94a3b8", "#0f294a", "#c84b31")[k], label=f"{label} · media {g.mean():.2f} %")
+    ax.bar(x + (k - 0.5) * width, g, width, color=("#94a3b8", "#c84b31")[k], label=f"{label} · media {g.mean():.2f} %")
 ax.axhline(0, color="black", lw=0.8)
 ax.set_xticks(x, names, rotation=60, ha="right", fontsize=8)
 ax.set_ylabel("gap SRC frente a DRC (%)")
